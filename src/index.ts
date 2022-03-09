@@ -6,10 +6,11 @@
 // the animation that's baked into the 3D model file.
 
 import * as ZapparThree from '@zappar/zappar-threejs';
+import { getHashes } from 'crypto';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import model from '../assets/waving.glb';
-import targetImage from '../assets/example-tracking-image.zpt';
+import model from '../assets/blocnote.glb';
+import targetImage from '../assets/marker.zpt';
 
 // The SDK is supported on many different browsers, but there are some that
 // don't provide camera access. This function detects if the browser is supported
@@ -73,19 +74,14 @@ const imageTrackerGroup = new ZapparThree.ImageAnchorGroup(camera, imageTracker)
 // Add our image tracker group into the ThreeJS scene
 scene.add(imageTrackerGroup);
 
-let action: THREE.AnimationAction;
-let mixer: THREE.AnimationMixer;
+
 
 // Load a 3D model to place within our group (using ThreeJS's GLTF loader)
 // Pass our loading manager in to ensure the progress bar works correctly
 const gltfLoader = new GLTFLoader(manager);
 gltfLoader.load(model, (gltf) => {
-  // Get the animation and set mixer and action.
-  // which will then be triggered on button press
-  mixer = new THREE.AnimationMixer(gltf.scene);
-  action = mixer.clipAction(gltf.animations[0]);
-
-  // Now the model has been loaded, we can rotate it and add it to our image_tracker_group
+  gltf.scene.rotateZ(-Math.PI/2)
+  gltf.scene.scale.set(2,2,2)
   imageTrackerGroup.add(gltf.scene.rotateX(Math.PI / 2));
 }, undefined, () => {
   console.log('An error ocurred loading the GLTF model');
@@ -94,59 +90,22 @@ gltfLoader.load(model, (gltf) => {
 // Light up our scene with an ambient light
 imageTrackerGroup.add(new THREE.AmbientLight(0xffffff));
 
-// Create a plane under the character that we'll check to see if
-// the user is looking at (in order to play the animation)
-// Using a plane rather than the object itself has two advantages:
-// 1. We can make the plane a bit bigger than the object so the animation
-//    plays without the user having to look exactly at the object
-// 2. The plane is a simpler 3D object so there's less computation
-//    required to work out if the user's gaze intersects with it
-// We're making the plane almost completely transparent but in a
-// real project you'd probably want it completely transparent
-const hotspotPlane = new THREE.Mesh(
-  new THREE.PlaneGeometry(1.473, 2.05),
-  new THREE.MeshBasicMaterial({
-    transparent: true,
-    color: new THREE.Color(0, 0, 0),
-    opacity: 0.3,
-  }),
-);
 
-// Add the hotspot plane to our tracked group.
-imageTrackerGroup.add(hotspotPlane);
+
+
 
 // When we lose sight of the camera, hide the scene contents.
 imageTracker.onVisible.bind(() => { scene.visible = true; });
 imageTracker.onNotVisible.bind(() => { scene.visible = false; });
 
 // used to get deltaTime for our animations.
-const clock = new THREE.Clock();
 
 // We'll use a raycaster to see if the hotspot plane is in front of the camera
-const raycaster = new THREE.Raycaster();
-
 // Use a function to render our scene as usual
 function render(): void {
   // The Zappar camera must have updateFrame called every frame
   camera.updateFrame(renderer);
-
-  // Point the raycaster down the center of the camera
-  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-
-  // Check if the raycaster intersects with the hotspot
-  const intersects = raycaster.intersectObject(hotspotPlane);
-  if (intersects.length > 0) {
-    // loop the animation once (if it has loaded.)
-    action?.setLoop(THREE.LoopOnce, 1).play();
-  } else {
-    // reset the animation. (if it has loaded.)
-    action?.reset();
-  }
-
-  // if the mixer has been declared, update our animations with delta time
-  mixer?.update(clock.getDelta());
-
-  // Draw the ThreeJS scene in the usual way, but using the Zappar camera
+ 
   renderer.render(scene, camera);
 
   // Call render() again next frame
