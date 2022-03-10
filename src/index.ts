@@ -9,7 +9,7 @@ import * as ZapparThree from '@zappar/zappar-threejs';
 import { getHashes } from 'crypto';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import model from '../assets/blocnote.glb';
+import model from '../assets/сhechol.glb';
 import targetImage from '../assets/marker.zpt';
 
 // The SDK is supported on many different browsers, but there are some that
@@ -80,7 +80,7 @@ scene.add(imageTrackerGroup);
 // Pass our loading manager in to ensure the progress bar works correctly
 const gltfLoader = new GLTFLoader(manager);
 gltfLoader.load(model, (gltf) => {
-  gltf.scene.rotateZ(-Math.PI/2)
+  gltf.scene.rotateZ(Math.PI/2)
   gltf.scene.scale.set(2,2,2)
   imageTrackerGroup.add(gltf.scene.rotateX(Math.PI / 2));
 }, undefined, () => {
